@@ -56,20 +56,34 @@ func CopyDirectory(source, destination string, excludePatterns []string) error {
 			return os.MkdirAll(destPath, info.Mode())
 		}
 
-		// Проверяем, что файл все еще существует и доступен перед копированием
-		// (может быть удален между моментом обнаружения и копированием, или это битый симлинк)
-		// os.Stat следует симлинкам, поэтому битые симлинки будут обнаружены здесь
-		fileInfo, err := os.Stat(path)
-		if os.IsNotExist(err) {
-			// Файл не существует (или битый симлинк), пропускаем
-			return nil
+		// Проверяем, является ли это симлинком
+		// filepath.Walk использует os.Lstat, поэтому info содержит информацию о симлинке, а не о цели
+		if info.Mode()&os.ModeSymlink != 0 {
+			// Копируем симлинк как симлинк
+			target, err := os.Readlink(path)
+			if err != nil {
+				// Не удалось прочитать симлинк, пропускаем
+				return nil
+			}
+			// Проверяем, существует ли уже файл/симлинк по целевому пути
+			if _, err := os.Lstat(destPath); err == nil {
+				// Файл уже существует, удаляем его
+				if err := os.Remove(destPath); err != nil {
+					return fmt.Errorf("failed to remove existing file for symlink: %w", err)
+				}
+			}
+			// Создаем новый симлинк
+			return os.Symlink(target, destPath)
 		}
-		if err != nil {
-			// Другая ошибка (например, нет прав доступа), пропускаем
+
+		// Обычный файл - проверяем, что он все еще существует перед копированием
+		// (может быть удален между моментом обнаружения и копированием)
+		if _, err := os.Lstat(path); os.IsNotExist(err) {
+			// Файл не существует, пропускаем
 			return nil
 		}
 
-		return copyFile(path, destPath, fileInfo.Mode())
+		return copyFile(path, destPath, info.Mode())
 	})
 }
 
