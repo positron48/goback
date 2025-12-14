@@ -8,17 +8,7 @@ Automated backup system written in Go.
 
 ```bash
 go build -o goback .
-```
-
-### Automatic build via GitHub Actions
-
-When a tag is created (e.g., `v1.0.0`) or via workflow_dispatch, a binary for Ubuntu 20.04 is automatically built and attached to the release.
-
-```bash
-# Create tag and push
-git tag v1.0.0
-git push origin v1.0.0
-```
+``` 
 
 ## Usage
 
