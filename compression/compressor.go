@@ -69,8 +69,28 @@ func (c *ZipCompressor) Compress(source, destination string) error {
 			return err
 		}
 
+		// Пропускаем директории
 		if info.IsDir() {
 			return nil
+		}
+
+		// Проверяем, является ли это симлинком, указывающим на директорию
+		if info.Mode()&os.ModeSymlink != 0 {
+			// Проверяем, куда указывает симлинк
+			target, err := os.Readlink(path)
+			if err != nil {
+				// Не удалось прочитать симлинк, пропускаем
+				return nil
+			}
+			// Получаем абсолютный путь цели
+			if !filepath.IsAbs(target) {
+				target = filepath.Join(filepath.Dir(path), target)
+			}
+			// Проверяем, является ли цель директорией
+			if targetInfo, err := os.Stat(target); err == nil && targetInfo.IsDir() {
+				// Симлинк указывает на директорию, пропускаем
+				return nil
+			}
 		}
 
 		relPath, err := filepath.Rel(source, path)
@@ -83,16 +103,22 @@ func (c *ZipCompressor) Compress(source, destination string) error {
 }
 
 func (c *ZipCompressor) addFileToZip(writer *zip.Writer, filePath, zipPath string) error {
+	// Проверяем, что это файл, а не директория
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return err
+	}
+
+	// Дополнительная проверка: если это директория, пропускаем
+	if info.IsDir() {
+		return nil
+	}
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-
-	info, err := file.Stat()
-	if err != nil {
-		return err
-	}
 
 	header, err := zip.FileInfoHeader(info)
 	if err != nil {
