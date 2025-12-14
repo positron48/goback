@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"backup-tool/utils"
@@ -23,14 +24,14 @@ type BackupFile struct {
 }
 
 // ApplyRetention применяет политику хранения к бэкапам
-func ApplyRetention(backupDir, subdirectory string, policy RetentionPolicy) error {
+func ApplyRetention(backupDir, subdirectory, backupName string, policy RetentionPolicy) error {
 	backupPath := filepath.Join(backupDir, subdirectory)
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 		return nil // Директория не существует, нечего чистить
 	}
 
-	// Получаем все файлы бэкапов
-	files, err := getBackupFiles(backupPath)
+	// Получаем все файлы бэкапов, фильтруя по имени бэкапа
+	files, err := getBackupFiles(backupPath, backupName)
 	if err != nil {
 		return fmt.Errorf("failed to get backup files: %w", err)
 	}
@@ -64,11 +65,14 @@ func ApplyRetention(backupDir, subdirectory string, policy RetentionPolicy) erro
 	return nil
 }
 
-func getBackupFiles(dir string) ([]BackupFile, error) {
+func getBackupFiles(dir, backupName string) ([]BackupFile, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
+
+	// Префикс для фильтрации файлов по имени бэкапа
+	namePrefix := backupName + "-"
 
 	var files []BackupFile
 	for _, entry := range entries {
@@ -76,8 +80,21 @@ func getBackupFiles(dir string) ([]BackupFile, error) {
 			continue
 		}
 
-		path := filepath.Join(dir, entry.Name())
-		t, err := utils.ParseDateFromFilename(entry.Name())
+		// Фильтруем файлы по префиксу имени бэкапа
+		entryName := entry.Name()
+		// Убираем расширение для проверки префикса
+		baseName := entryName
+		if idx := strings.LastIndex(entryName, "."); idx != -1 {
+			baseName = entryName[:idx]
+		}
+
+		// Проверяем, что имя файла начинается с {backupName}-
+		if !strings.HasPrefix(baseName, namePrefix) {
+			continue
+		}
+
+		path := filepath.Join(dir, entryName)
+		t, err := utils.ParseDateFromFilename(entryName)
 		if err != nil {
 			// Пропускаем файлы, из которых нельзя извлечь дату
 			continue

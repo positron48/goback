@@ -114,7 +114,7 @@ func (e *Executor) ExecuteBackup(backupConfig *config.BackupConfig) error {
 	}
 
 	fmt.Printf("Applying retention policy...\n")
-	if err := retention.ApplyRetention(e.globalConfig.BackupDir, backupConfig.Subdirectory, retention.RetentionPolicy{
+	if err := retention.ApplyRetention(e.globalConfig.BackupDir, backupConfig.Subdirectory, backupConfig.Name, retention.RetentionPolicy{
 		Daily:   retentionPolicy.Daily,
 		Weekly:  retentionPolicy.Weekly,
 		Monthly: retentionPolicy.Monthly,
