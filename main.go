@@ -6,6 +6,7 @@ import (
 
 	"backup-tool/backup"
 	"backup-tool/config"
+	"backup-tool/hooks"
 	"backup-tool/utils"
 )
 
@@ -25,6 +26,14 @@ func main() {
 
 	utils.PrintHeader("Found %d backup(s) to process", len(cfg.Backups))
 
+	// Выполняем глобальные pre-hooks перед всеми бэкапами
+	if len(cfg.Global.PreHooks) > 0 {
+		utils.PrintHeader("Running global pre-hooks...")
+		if err := hooks.RunHooks(cfg.Global.PreHooks); err != nil {
+			fmt.Printf("Warning: global pre-hooks completed with errors\n")
+		}
+	}
+
 	executor := backup.NewExecutor(&cfg.Global)
 
 	successCount := 0
@@ -40,6 +49,14 @@ func main() {
 		}
 
 		successCount++
+	}
+
+	// Выполняем глобальные post-hooks после всех бэкапов
+	if len(cfg.Global.PostHooks) > 0 {
+		utils.PrintHeader("\nRunning global post-hooks...")
+		if err := hooks.RunHooks(cfg.Global.PostHooks); err != nil {
+			fmt.Printf("Warning: global post-hooks completed with errors\n")
+		}
 	}
 
 	utils.PrintHeader("\n=== Summary ===")

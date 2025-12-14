@@ -27,13 +27,7 @@ func NewExecutor(globalConfig *config.GlobalConfig) *Executor {
 func (e *Executor) ExecuteBackup(backupConfig *config.BackupConfig) error {
 	utils.PrintHeader("Starting backup: %s", backupConfig.Name)
 
-	// Выполняем pre-hooks (сначала глобальные, потом локальные)
-	if len(e.globalConfig.PreHooks) > 0 {
-		fmt.Printf("Running global pre-hooks...\n")
-		if err := hooks.RunHooks(e.globalConfig.PreHooks); err != nil {
-			fmt.Printf("Warning: global pre-hooks completed with errors\n")
-		}
-	}
+	// Выполняем локальные pre-hooks
 	if len(backupConfig.PreHooks) > 0 {
 		fmt.Printf("Running backup pre-hooks...\n")
 		if err := hooks.RunHooks(backupConfig.PreHooks); err != nil {
@@ -123,17 +117,11 @@ func (e *Executor) ExecuteBackup(backupConfig *config.BackupConfig) error {
 		fmt.Printf("Warning: retention policy failed: %v\n", err)
 	}
 
-	// Выполняем post-hooks (сначала локальные, потом глобальные)
+	// Выполняем локальные post-hooks
 	if len(backupConfig.PostHooks) > 0 {
 		fmt.Printf("Running backup post-hooks...\n")
 		if err := hooks.RunHooks(backupConfig.PostHooks); err != nil {
 			fmt.Printf("Warning: backup post-hooks completed with errors\n")
-		}
-	}
-	if len(e.globalConfig.PostHooks) > 0 {
-		fmt.Printf("Running global post-hooks...\n")
-		if err := hooks.RunHooks(e.globalConfig.PostHooks); err != nil {
-			fmt.Printf("Warning: global post-hooks completed with errors\n")
 		}
 	}
 
