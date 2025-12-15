@@ -47,10 +47,6 @@ If the config path is not specified, `config.yaml` in the current directory is u
 
 # Skip global hooks
 ./goback --skip-global-pre-hooks --skip-global-post-hooks
-
-# Positional arguments (for backward compatibility)
-./goback config.yaml backup-name
-./goback backup-name backup-name2
 ```
 
 ## Configuration
