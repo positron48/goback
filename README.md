@@ -2,14 +2,6 @@
 
 Automated backup system written in Go.
 
-## Building
-
-### Local build
-
-```bash
-go build -o goback .
-``` 
-
 ## Usage
 
 ### Basic usage
@@ -51,7 +43,7 @@ If the config path is not specified, `config.yaml` in the current directory is u
 
 ## Configuration
 
-The tool uses a YAML configuration file to set up backups. See `config-example.yaml` for a detailed example with all available options and their descriptions.
+The tool uses a YAML configuration file to set up backups.
 
 ### Minimal configuration example
 
@@ -85,15 +77,11 @@ For complete configuration documentation with all available options, see `config
 - Selective backup execution by name
 - Global hooks control
 
-## Project structure
 
-```
-goback/
-├── main.go                 # Entry point
-├── config/                 # Configuration parsing
-├── backup/                 # Backup execution logic
-├── compression/            # Compression support
-├── retention/              # Retention policy
-├── hooks/                   # Hook execution
-└── utils/                   # Utilities
-```
+## Building
+
+### Local build
+
+```bash
+go build -o goback .
+``` 
